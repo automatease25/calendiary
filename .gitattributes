@@ -1,0 +1,63 @@
+* text=auto
+
+# Kotlin
+*.kt text diff=kotlin
+*.kts text diff=kotlin
+
+# Java
+*.java text diff=java
+
+# XML
+*.xml text
+
+# Gradle
+*.gradle text
+*.gradle.kts text
+
+# Shell scripts
+*.sh text eol=lf
+gradlew text eol=lf
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Git Config
+.gitignore text
+.gitattributes text
+
+# Documentation
+*.md text
+
+# Properties
+*.properties text
+
+# Swift
+*.swift text
+
+# Xcode
+*.pbxproj binary
+*.xcworkspace binary
+*.storyboard text
+*.xib text
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg text
+*.ico binary
+*.webp binary
+
+# Archives
+*.jar binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+
+# Android
+*.keystore binary
+*.jks binary

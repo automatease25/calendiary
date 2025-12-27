@@ -1,0 +1,74 @@
+# Gradle files
+.gradle/
+build/
+**/build/
+!src/**/build/
+
+# Gradle Wrapper
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Android specific
+*.iml
+.idea/
+.idea
+local.properties
+.DS_Store
+/captures
+.externalNativeBuild
+.cxx
+*.apk
+*.ap_
+*.aab
+
+# Kotlin
+.kotlin
+*.class
+*.log
+
+# IntelliJ
+*.ipr
+*.iws
+*.idea
+out/
+
+# Android Studio Navigation editor temp files
+.navigation/
+
+# Android Studio captures folder
+captures/
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Xcode
+.DS_Store
+*.swp
+*.lock
+*~.nib
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.users
+*.userdata
+*.xcuserstate
+xcuserdata/
+**/xcuserdata/
+*.xccheckout
+DerivedData/
+*.moved-aside
+*.hmap
+*.ipa
+*.xg
+
+*.xcodeproj/project.xcworkspace/xcuserdata
+*.xcodeproj/xcuserdata
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Node
+node_modules/
