@@ -1,4 +1,25 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+## Tech Stack
+
+This project uses a modern Kotlin Multiplatform stack to share code between Android and iOS:
+
+*   **Language:** [Kotlin](https://kotlinlang.org/)
+*   **UI Framework:** [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) - Declarative UI framework shared across platforms.
+*   **Navigation:** [Voyager](https://github.com/adrielcafe/voyager) - A navigation library for Compose.
+*   **Dependency Injection:** [Koin](https://insert-koin.io/) - A lightweight dependency injection framework for Kotlin.
+*   **Database:** [Room KMP](https://developer.android.com/kotlin/multiplatform/room) - SQLite object mapping library.
+*   **Concurrency:** [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) - For asynchronous programming.
+*   **Date & Time:** [Kotlinx DateTime](https://github.com/Kotlin/kotlinx-datetime) - A multiplatform date and time library.
+
+### Prerequisites
+
+To build and run this project, you will need:
+
+*   **JDK 17/21** (required for AGP 8+).
+*   **Android Studio** (Ladybug or newer recommended) or **IntelliJ IDEA**.
+*   **Xcode** (required for building the iOS app; macOS only).
+*   **Kotlin Multiplatform Mobile Plugin** (usually bundled with recent Android Studio versions).
+
+### Project Structure
 
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
   It contains several subfolders:
