@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
@@ -43,31 +42,23 @@ import org.automatease.calendiary.domain.repository.DiaryRepository
 import org.koin.compose.koinInject
 
 /**
- * Note editor screen for viewing and editing diary entries.
- * Accepts a LocalDate to identify which day's entry to edit.
+ * Note editor screen for viewing and editing diary entries. Accepts a LocalDate to identify which
+ * day's entry to edit.
  */
-data class NoteEditorScreen(
-    val date: LocalDate
-) : Screen {
+data class NoteEditorScreen(val date: LocalDate) : Screen {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val diaryRepository = koinInject<DiaryRepository>()
-        
+
         // Create screen model with the date parameter
-        val screenModel = remember(date) {
-            NoteEditorScreenModel(date, diaryRepository)
-        }
+        val screenModel = remember(date) { NoteEditorScreenModel(date, diaryRepository) }
         val uiState by screenModel.uiState.collectAsState()
 
         // Save on dispose (when navigating back)
-        DisposableEffect(Unit) {
-            onDispose {
-                screenModel.saveOnDispose()
-            }
-        }
+        DisposableEffect(Unit) { onDispose { screenModel.saveOnDispose() } }
 
         Scaffold(
             topBar = {
@@ -76,19 +67,18 @@ data class NoteEditorScreen(
                         Column {
                             Text(
                                 text = uiState.dateDisplayText,
-                                style = MaterialTheme.typography.titleMedium
-                            )
+                                style = MaterialTheme.typography.titleMedium)
                             if (uiState.isSaving) {
                                 Text(
                                     text = "Saving...",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                 )
                             } else if (uiState.hasUnsavedChanges) {
                                 Text(
                                     text = "Unsaved changes",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary
+                                    color = MaterialTheme.colorScheme.primary,
                                 )
                             }
                         }
@@ -97,36 +87,32 @@ data class NoteEditorScreen(
                         IconButton(onClick = { navigator.pop() }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
-                            )
+                                contentDescription = "Back")
                         }
                     },
                     actions = {
                         if (uiState.content.isNotBlank()) {
                             IconButton(
-                                onClick = { screenModel.onEvent(NoteEditorUiEvent.Delete) }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = "Delete entry",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
+                                onClick = { screenModel.onEvent(NoteEditorUiEvent.Delete) }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete entry",
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                }
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
+                    colors =
+                        TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface),
                 )
             },
-            containerColor = MaterialTheme.colorScheme.background
+            containerColor = MaterialTheme.colorScheme.background,
         ) { paddingValues ->
             if (uiState.isLoading) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.fillMaxSize().padding(paddingValues),
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
@@ -134,43 +120,33 @@ data class NoteEditorScreen(
                 NoteEditorContent(
                     content = uiState.content,
                     onContentChange = { screenModel.onEvent(NoteEditorUiEvent.UpdateContent(it)) },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .imePadding()
+                    modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding(),
                 )
             }
         }
     }
 }
 
-/**
- * Main content area for the note editor.
- */
+/** Main content area for the note editor. */
 @Composable
 private fun NoteEditorContent(
     content: String,
     onContentChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = modifier
-            .verticalScroll(scrollState)
-            .padding(16.dp)
-    ) {
+    Column(modifier = modifier.verticalScroll(scrollState).padding(16.dp)) {
         BasicTextField(
             value = content,
             onValueChange = onContentChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f, fill = false),
-            textStyle = TextStyle(
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight
-            ),
+            modifier = Modifier.fillMaxWidth().weight(1f, fill = false),
+            textStyle =
+                TextStyle(
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight,
+                ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             decorationBox = { innerTextField ->
                 Box {
@@ -178,12 +154,12 @@ private fun NoteEditorContent(
                         Text(
                             text = "Write your thoughts for today...",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                         )
                     }
                     innerTextField()
                 }
-            }
+            },
         )
 
         // Add some bottom padding for better scrolling experience

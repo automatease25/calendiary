@@ -12,15 +12,12 @@ import kotlinx.datetime.todayIn
 import org.automatease.calendiary.domain.model.CalendarDay
 import org.automatease.calendiary.domain.model.CalendarMonth
 
-/**
- * Logic for generating calendar grids and performing date calculations.
- */
+/** Logic for generating calendar grids and performing date calculations. */
 object CalendarLogic {
 
     /**
-     * Generates a calendar grid for the specified year and month.
-     * The grid is aligned to start on Monday and includes padding days
-     * from the previous and next months to complete the grid.
+     * Generates a calendar grid for the specified year and month. The grid is aligned to start on
+     * Monday and includes padding days from the previous and next months to complete the grid.
      *
      * @param year The year
      * @param month The month
@@ -32,19 +29,19 @@ object CalendarLogic {
         year: Int,
         month: Month,
         today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
-        datesWithEntries: Set<LocalDate> = emptySet()
+        datesWithEntries: Set<LocalDate> = emptySet(),
     ): CalendarMonth {
         val days = mutableListOf<CalendarDay>()
-        
+
         // First day of the month
         val firstDayOfMonth = LocalDate(year, month, 1)
-        
+
         // Last day of the month
         val lastDayOfMonth = getLastDayOfMonth(year, month)
-        
+
         // Calculate padding days needed at the start (week starts on Monday)
         val startPaddingDays = calculateStartPadding(firstDayOfMonth.dayOfWeek)
-        
+
         // Add padding days from previous month
         if (startPaddingDays > 0) {
             val previousMonthLastDay = firstDayOfMonth.minus(1, DateTimeUnit.DAY)
@@ -53,7 +50,7 @@ object CalendarLogic {
                 days.add(CalendarDay.PreviousMonthDay(paddingDate))
             }
         }
-        
+
         // Add all days of the current month
         var currentDate = firstDayOfMonth
         while (currentDate <= lastDayOfMonth) {
@@ -61,16 +58,15 @@ object CalendarLogic {
                 CalendarDay.Day(
                     date = currentDate,
                     isToday = currentDate == today,
-                    hasEntry = currentDate in datesWithEntries
-                )
-            )
+                    hasEntry = currentDate in datesWithEntries,
+                ))
             currentDate = currentDate.plus(1, DateTimeUnit.DAY)
         }
-        
+
         // Calculate padding days needed at the end to complete the grid
         val totalDaysSoFar = days.size
         val endPaddingDays = calculateEndPadding(totalDaysSoFar)
-        
+
         // Add padding days from next month
         if (endPaddingDays > 0) {
             val nextMonthFirstDay = lastDayOfMonth.plus(1, DateTimeUnit.DAY)
@@ -79,17 +75,13 @@ object CalendarLogic {
                 days.add(CalendarDay.NextMonthDay(paddingDate))
             }
         }
-        
-        return CalendarMonth(
-            year = year,
-            month = month.ordinal + 1,
-            days = days
-        )
+
+        return CalendarMonth(year = year, month = month.ordinal + 1, days = days)
     }
 
     /**
-     * Calculates the number of padding days needed at the start of the grid.
-     * Week starts on Monday (index 0).
+     * Calculates the number of padding days needed at the start of the grid. Week starts on Monday
+     * (index 0).
      *
      * @param firstDayOfWeek The day of week of the first day of the month
      * @return Number of padding days (0-6)
@@ -108,8 +100,8 @@ object CalendarLogic {
     }
 
     /**
-     * Calculates the number of padding days needed at the end of the grid.
-     * The grid should be a complete set of weeks (multiple of 7).
+     * Calculates the number of padding days needed at the end of the grid. The grid should be a
+     * complete set of weeks (multiple of 7).
      *
      * @param totalDaysSoFar Current number of days in the grid
      * @return Number of padding days needed to complete the last week
@@ -127,20 +119,21 @@ object CalendarLogic {
      * @return The last date of the month
      */
     private fun getLastDayOfMonth(year: Int, month: Month): LocalDate {
-        val daysInMonth = when (month) {
-            Month.JANUARY -> 31
-            Month.FEBRUARY -> if (isLeapYear(year)) 29 else 28
-            Month.MARCH -> 31
-            Month.APRIL -> 30
-            Month.MAY -> 31
-            Month.JUNE -> 30
-            Month.JULY -> 31
-            Month.AUGUST -> 31
-            Month.SEPTEMBER -> 30
-            Month.OCTOBER -> 31
-            Month.NOVEMBER -> 30
-            Month.DECEMBER -> 31
-        }
+        val daysInMonth =
+            when (month) {
+                Month.JANUARY -> 31
+                Month.FEBRUARY -> if (isLeapYear(year)) 29 else 28
+                Month.MARCH -> 31
+                Month.APRIL -> 30
+                Month.MAY -> 31
+                Month.JUNE -> 30
+                Month.JULY -> 31
+                Month.AUGUST -> 31
+                Month.SEPTEMBER -> 30
+                Month.OCTOBER -> 31
+                Month.NOVEMBER -> 30
+                Month.DECEMBER -> 31
+            }
         return LocalDate(year, month, daysInMonth)
     }
 
@@ -208,8 +201,7 @@ object CalendarLogic {
     }
 
     /**
-     * Gets the short day names for the calendar header.
-     * Week starts on Monday.
+     * Gets the short day names for the calendar header. Week starts on Monday.
      *
      * @return List of day abbreviations (Mon, Tue, Wed, ...)
      */

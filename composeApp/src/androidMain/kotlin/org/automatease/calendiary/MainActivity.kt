@@ -16,10 +16,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        
+
         // Initialize database context
         initializeDatabaseContext(applicationContext)
-        
+
         // Initialize Koin
         startKoin {
             androidLogger()
@@ -27,9 +27,7 @@ class MainActivity : ComponentActivity() {
             modules(getKoinModules())
         }
 
-        setContent {
-            App()
-        }
+        setContent { App() }
     }
 }
 

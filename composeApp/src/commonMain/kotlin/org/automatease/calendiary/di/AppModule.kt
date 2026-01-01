@@ -11,10 +11,7 @@ import org.automatease.calendiary.presentation.calendar.CalendarScreenModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
-/**
- * Provides the Room database instance.
- * Uses BundledSQLiteDriver for KMP compatibility.
- */
+/** Provides the Room database instance. Uses BundledSQLiteDriver for KMP compatibility. */
 fun provideDatabase(): DiaryDatabase {
     return getDatabaseBuilder()
         .setDriver(BundledSQLiteDriver())
@@ -22,24 +19,20 @@ fun provideDatabase(): DiaryDatabase {
         .build()
 }
 
-/**
- * Main application Koin module containing all dependencies.
- */
+/** Main application Koin module containing all dependencies. */
 val appModule: Module = module {
     // Database
     single<DiaryDatabase> { provideDatabase() }
-    
+
     // DAO
     single { get<DiaryDatabase>().diaryDao() }
-    
+
     // Repository
     single<DiaryRepository> { SqlDiaryRepository(get()) }
-    
+
     // ScreenModels
     factory { CalendarScreenModel(get()) }
 }
 
-/**
- * Returns all Koin modules for the application.
- */
+/** Returns all Koin modules for the application. */
 fun getKoinModules(): List<Module> = listOf(appModule)

@@ -6,4 +6,12 @@ plugins {
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
+    alias(libs.plugins.ktfmt)
+}
+
+allprojects {
+    apply(plugin = "com.ncorti.ktfmt.gradle")
+    configure<com.ncorti.ktfmt.gradle.KtfmtExtension> {
+        kotlinLangStyle()
+    }
 }

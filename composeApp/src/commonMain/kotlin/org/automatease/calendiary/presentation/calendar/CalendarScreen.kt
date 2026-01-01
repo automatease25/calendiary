@@ -47,9 +47,7 @@ import kotlinx.datetime.LocalDate
 import org.automatease.calendiary.domain.model.CalendarDay
 import org.automatease.calendiary.presentation.editor.NoteEditorScreen
 
-/**
- * Main calendar screen displaying the monthly grid.
- */
+/** Main calendar screen displaying the monthly grid. */
 class CalendarScreen : Screen {
 
     @Composable
@@ -59,26 +57,19 @@ class CalendarScreen : Screen {
         val uiState by screenModel.uiState.collectAsState()
 
         // Refresh when returning to this screen
-        LaunchedEffect(Unit) {
-            screenModel.refresh()
-        }
+        LaunchedEffect(Unit) { screenModel.refresh() }
 
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-            ) {
+        Scaffold(containerColor = MaterialTheme.colorScheme.background) { paddingValues ->
+            Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
                 // Month navigation header
                 MonthHeader(
                     monthDisplayName = uiState.monthDisplayName,
                     year = uiState.currentYear,
-                    onPreviousMonth = { screenModel.onEvent(CalendarUiEvent.NavigateToPreviousMonth) },
+                    onPreviousMonth = {
+                        screenModel.onEvent(CalendarUiEvent.NavigateToPreviousMonth)
+                    },
                     onNextMonth = { screenModel.onEvent(CalendarUiEvent.NavigateToNextMonth) },
-                    onTodayClick = { screenModel.onEvent(CalendarUiEvent.NavigateToToday) }
+                    onTodayClick = { screenModel.onEvent(CalendarUiEvent.NavigateToToday) },
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -90,19 +81,14 @@ class CalendarScreen : Screen {
 
                 // Calendar grid
                 if (uiState.isLoading) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 } else {
                     uiState.calendarMonth?.let { calendarMonth ->
                         CalendarGrid(
                             days = calendarMonth.days,
-                            onDayClick = { date ->
-                                navigator.push(NoteEditorScreen(date))
-                            }
+                            onDayClick = { date -> navigator.push(NoteEditorScreen(date)) },
                         )
                     }
                 }
@@ -111,43 +97,39 @@ class CalendarScreen : Screen {
     }
 }
 
-/**
- * Month navigation header with previous/next buttons.
- */
+/** Month navigation header with previous/next buttons. */
 @Composable
 private fun MonthHeader(
     monthDisplayName: String,
     year: Int,
     onPreviousMonth: () -> Unit,
     onNextMonth: () -> Unit,
-    onTodayClick: () -> Unit
+    onTodayClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onPreviousMonth) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = "Previous month",
-                tint = MaterialTheme.colorScheme.onBackground
+                tint = MaterialTheme.colorScheme.onBackground,
             )
         }
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = monthDisplayName,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
             )
             Text(
                 text = year.toString(),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
         }
 
@@ -155,35 +137,27 @@ private fun MonthHeader(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Next month",
-                tint = MaterialTheme.colorScheme.onBackground
+                tint = MaterialTheme.colorScheme.onBackground,
             )
         }
     }
 
     // Today button
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
         TextButton(onClick = onTodayClick) {
             Text(
                 text = "Today",
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
             )
         }
     }
 }
 
-/**
- * Row displaying day abbreviations (Mon, Tue, Wed, ...).
- */
+/** Row displaying day abbreviations (Mon, Tue, Wed, ...). */
 @Composable
 private fun DayHeadersRow(dayHeaders: List<String>) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
         dayHeaders.forEach { dayName ->
             Text(
                 text = dayName,
@@ -191,43 +165,28 @@ private fun DayHeadersRow(dayHeaders: List<String>) {
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
             )
         }
     }
 }
 
-/**
- * Calendar grid using LazyVerticalGrid.
- */
+/** Calendar grid using LazyVerticalGrid. */
 @Composable
-private fun CalendarGrid(
-    days: List<CalendarDay>,
-    onDayClick: (LocalDate) -> Unit
-) {
+private fun CalendarGrid(days: List<CalendarDay>, onDayClick: (LocalDate) -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        items(days) { day ->
-            CalendarDayCell(
-                day = day,
-                onClick = onDayClick
-            )
-        }
+        items(days) { day -> CalendarDayCell(day = day, onClick = onDayClick) }
     }
 }
 
-/**
- * Individual calendar day cell.
- */
+/** Individual calendar day cell. */
 @Composable
-private fun CalendarDayCell(
-    day: CalendarDay,
-    onClick: (LocalDate) -> Unit
-) {
+private fun CalendarDayCell(day: CalendarDay, onClick: (LocalDate) -> Unit) {
     when (day) {
         is CalendarDay.Day -> {
             DayCell(
@@ -235,7 +194,7 @@ private fun CalendarDayCell(
                 isToday = day.isToday,
                 hasEntry = day.hasEntry,
                 isCurrentMonth = true,
-                onClick = { onClick(day.date) }
+                onClick = { onClick(day.date) },
             )
         }
         is CalendarDay.PreviousMonthDay -> {
@@ -244,7 +203,7 @@ private fun CalendarDayCell(
                 isToday = false,
                 hasEntry = false,
                 isCurrentMonth = false,
-                onClick = { onClick(day.date) }
+                onClick = { onClick(day.date) },
             )
         }
         is CalendarDay.NextMonthDay -> {
@@ -253,87 +212,82 @@ private fun CalendarDayCell(
                 isToday = false,
                 hasEntry = false,
                 isCurrentMonth = false,
-                onClick = { onClick(day.date) }
+                onClick = { onClick(day.date) },
             )
         }
         is CalendarDay.Empty -> {
-            Box(
-                modifier = Modifier
-                    .aspectRatio(1f)
-                    .fillMaxWidth()
-            )
+            Box(modifier = Modifier.aspectRatio(1f).fillMaxWidth())
         }
     }
 }
 
-/**
- * Styled day cell with support for today highlight and entry indicator.
- */
+/** Styled day cell with support for today highlight and entry indicator. */
 @Composable
 private fun DayCell(
     date: LocalDate,
     isToday: Boolean,
     hasEntry: Boolean,
     isCurrentMonth: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val backgroundColor = when {
-        isToday -> MaterialTheme.colorScheme.primary
-        else -> MaterialTheme.colorScheme.surface
-    }
+    val backgroundColor =
+        when {
+            isToday -> MaterialTheme.colorScheme.primary
+            else -> MaterialTheme.colorScheme.surface
+        }
 
-    val textColor = when {
-        isToday -> MaterialTheme.colorScheme.onPrimary
-        isCurrentMonth -> MaterialTheme.colorScheme.onSurface
-        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
-    }
+    val textColor =
+        when {
+            isToday -> MaterialTheme.colorScheme.onPrimary
+            isCurrentMonth -> MaterialTheme.colorScheme.onSurface
+            else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+        }
 
-    val borderModifier = if (isCurrentMonth && !isToday) {
-        Modifier.border(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-            shape = RoundedCornerShape(8.dp)
-        )
-    } else {
-        Modifier
-    }
+    val borderModifier =
+        if (isCurrentMonth && !isToday) {
+            Modifier.border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(8.dp),
+            )
+        } else {
+            Modifier
+        }
 
     Box(
-        modifier = Modifier
-            .aspectRatio(1f)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(backgroundColor)
-            .then(borderModifier)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier.aspectRatio(1f)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .background(backgroundColor)
+                .then(borderModifier)
+                .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = date.dayOfMonth.toString(),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                color = textColor
+                color = textColor,
             )
 
             // Entry indicator dot
             if (hasEntry) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isToday) {
-                                MaterialTheme.colorScheme.onPrimary
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            }
-                        )
-                )
+                    modifier =
+                        Modifier.size(6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isToday) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                }))
             }
         }
     }
