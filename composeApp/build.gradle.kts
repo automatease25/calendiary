@@ -87,27 +87,36 @@ android {
     }
     
     signingConfigs {
-        create("release") {
-            val keystoreProperties = Properties()
-            file("keystore.properties").inputStream().use { keystoreProperties.load(it) }
-            storeFile = file(keystoreProperties.getProperty("storeFile"))
-            storePassword = keystoreProperties.getProperty("storePassword")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-            keyAlias = keystoreProperties.getProperty("keyAlias")
+        val keystoreFile = file("keystore.properties")
+        if (keystoreFile.exists()) {
+            create("release") {
+                val keystoreProperties = Properties()
+                keystoreFile.inputStream().use { keystoreProperties.load(it) }
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+            }
         }
     }
-    
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    
+
     buildTypes {
+        getByName("debug") {
+            isMinifyEnabled = false
+        }
         getByName("release") {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+            val keystoreFile = file("keystore.properties")
+            if (keystoreFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     
