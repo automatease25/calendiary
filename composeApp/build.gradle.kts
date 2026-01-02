@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -17,22 +16,18 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
+
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.koin.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -44,28 +39,29 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
-            
-            // Room KMP
+
+            // kotlin-inject (Compile-time DI)
+            implementation(libs.kotlin.inject.runtime)
+
+            // Room KMP (Database)
             implementation(libs.room.runtime)
             implementation(libs.sqlite.bundled)
-            
-            // Koin
-            implementation(libs.koin.core)
-            implementation(libs.koin.compose)
-            implementation(libs.koin.compose.viewmodel)
-            
+
+            // Arrow (Typed error handling)
+            implementation(libs.arrow.core)
+
             // Decompose
             implementation(libs.decompose.core)
             implementation(libs.decompose.compose)
             implementation(libs.essenty.lifecycle)
             implementation(libs.essenty.lifecycle.coroutines)
-            
+
             // KotlinX DateTime
             implementation(libs.kotlinx.datetime)
-            
+
             // Coroutines
             implementation(libs.kotlinx.coroutines.core)
-            
+
             // Serialization (for Decompose)
             implementation(libs.kotlinx.serialization.json)
         }
@@ -104,11 +100,19 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+
+    // kotlin-inject KSP processors for each target
+    add("kspAndroid", libs.kotlin.inject.compiler)
+    add("kspIosArm64", libs.kotlin.inject.compiler)
+    add("kspIosSimulatorArm64", libs.kotlin.inject.compiler)
+
+    // Room KSP processors for each target
     add("kspAndroid", libs.room.compiler)
     add("kspIosArm64", libs.room.compiler)
     add("kspIosSimulatorArm64", libs.room.compiler)
 }
 
+// Room schema export configuration
 room {
     schemaDirectory("$projectDir/schemas")
 }

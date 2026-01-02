@@ -1,19 +1,27 @@
 package org.automatease.calendiary.domain.logic
 
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import kotlinx.datetime.todayIn
+import kotlinx.datetime.toLocalDateTime
 import org.automatease.calendiary.domain.model.CalendarDay
 import org.automatease.calendiary.domain.model.CalendarMonth
 
 /** Logic for generating calendar grids and performing date calculations. */
 object CalendarLogic {
+
+    /** Gets today's date in the current system timezone. */
+    private fun today(): LocalDate {
+        val now = Clock.System.now()
+        val instant = Instant.fromEpochMilliseconds(now.toEpochMilliseconds())
+        return instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    }
 
     /**
      * Generates a calendar grid for the specified year and month. The grid is aligned to start on
@@ -28,7 +36,7 @@ object CalendarLogic {
     fun generateCalendarGrid(
         year: Int,
         month: Month,
-        today: LocalDate = Clock.System.todayIn(TimeZone.currentSystemDefault()),
+        today: LocalDate = today(),
         datesWithEntries: Set<LocalDate> = emptySet(),
     ): CalendarMonth {
         val days = mutableListOf<CalendarDay>()

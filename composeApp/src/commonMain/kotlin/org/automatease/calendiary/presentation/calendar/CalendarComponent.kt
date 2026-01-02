@@ -1,23 +1,23 @@
 package org.automatease.calendiary.presentation.calendar
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.value.MutableValue
+import com.arkivanov.decompose.value.Value
+import com.arkivanov.decompose.value.update
 import com.arkivanov.essenty.lifecycle.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlin.time.Clock
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
+import kotlinx.datetime.toLocalDateTime
 import org.automatease.calendiary.domain.logic.CalendarLogic
 import org.automatease.calendiary.domain.repository.DiaryRepository
 
-/** Interface for the calendar component. */
+/** Interface for the calendar component. Uses Decompose Value for state. */
 interface CalendarComponent {
-    val uiState: StateFlow<CalendarUiState>
+    val state: Value<CalendarUiState>
 
     fun onEvent(event: CalendarUiEvent)
 
@@ -26,30 +26,40 @@ interface CalendarComponent {
     fun onDayClick(date: LocalDate)
 }
 
-/** Default implementation of CalendarComponent using Decompose. */
+/**
+ * Default implementation of CalendarComponent using Decompose. Uses Decompose Value for state
+ * management. Factories are manually created in AppComponent for assisted injection pattern.
+ */
 class DefaultCalendarComponent(
     componentContext: ComponentContext,
-    private val diaryRepository: DiaryRepository,
     private val onNavigateToEditor: (LocalDate) -> Unit,
+    private val diaryRepository: DiaryRepository,
 ) : CalendarComponent, ComponentContext by componentContext {
 
     private val scope = coroutineScope()
 
-    private val _uiState = MutableStateFlow(createInitialState())
-    override val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
+    private val _state = MutableValue(createInitialState())
+    override val state: Value<CalendarUiState> = _state
 
     init {
         loadCalendarData()
     }
 
+    /** Gets today's date in the current system timezone. */
+    private fun today(): LocalDate {
+        val now = Clock.System.now()
+        val instant = Instant.fromEpochMilliseconds(now.toEpochMilliseconds())
+        return instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
+    }
+
     /** Creates the initial UI state with the current month. */
     private fun createInitialState(): CalendarUiState {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+        val todayDate = today()
         return CalendarUiState(
-            currentYear = today.year,
-            currentMonth = today.month,
+            currentYear = todayDate.year,
+            currentMonth = todayDate.month,
             dayHeaders = CalendarLogic.getDayHeaders(),
-            monthDisplayName = CalendarLogic.getMonthDisplayName(today.month),
+            monthDisplayName = CalendarLogic.getMonthDisplayName(todayDate.month),
         )
     }
 
@@ -71,27 +81,29 @@ class DefaultCalendarComponent(
 
     /** Navigates to the previous month. */
     private fun navigateToPreviousMonth() {
+        val currentState = _state.value
         val (newYear, newMonth) =
-            CalendarLogic.getPreviousMonth(_uiState.value.currentYear, _uiState.value.currentMonth)
+            CalendarLogic.getPreviousMonth(currentState.currentYear, currentState.currentMonth)
         updateMonth(newYear, newMonth)
     }
 
     /** Navigates to the next month. */
     private fun navigateToNextMonth() {
+        val currentState = _state.value
         val (newYear, newMonth) =
-            CalendarLogic.getNextMonth(_uiState.value.currentYear, _uiState.value.currentMonth)
+            CalendarLogic.getNextMonth(currentState.currentYear, currentState.currentMonth)
         updateMonth(newYear, newMonth)
     }
 
     /** Navigates to the current month (today). */
     private fun navigateToToday() {
-        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-        updateMonth(today.year, today.month)
+        val todayDate = today()
+        updateMonth(todayDate.year, todayDate.month)
     }
 
     /** Updates the displayed month and reloads data. */
     private fun updateMonth(year: Int, month: Month) {
-        _uiState.update { currentState ->
+        _state.update { currentState ->
             currentState.copy(
                 currentYear = year,
                 currentMonth = month,
@@ -105,24 +117,23 @@ class DefaultCalendarComponent(
     /** Loads calendar data for the current month. Combines the calendar grid with diary entries. */
     private fun loadCalendarData() {
         scope.launch {
-            val year = _uiState.value.currentYear
-            val month = _uiState.value.currentMonth
+            val currentState = _state.value
+            val year = currentState.currentYear
+            val month = currentState.currentMonth
 
             diaryRepository.getEntriesForMonth(year, month.ordinal + 1).collect { entries ->
                 val datesWithEntries = entries.map { it.date }.toSet()
-                val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                val todayDate = today()
 
                 val calendarMonth =
                     CalendarLogic.generateCalendarGrid(
                         year = year,
                         month = month,
-                        today = today,
+                        today = todayDate,
                         datesWithEntries = datesWithEntries,
                     )
 
-                _uiState.update { currentState ->
-                    currentState.copy(calendarMonth = calendarMonth, isLoading = false)
-                }
+                _state.update { it.copy(calendarMonth = calendarMonth, isLoading = false) }
             }
         }
     }

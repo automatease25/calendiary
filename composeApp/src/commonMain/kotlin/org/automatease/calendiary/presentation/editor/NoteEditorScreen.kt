@@ -25,19 +25,19 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
+import com.arkivanov.decompose.extensions.compose.subscribeAsState
 
 /** Note editor screen for viewing and editing diary entries. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteEditorScreen(component: NoteEditorComponent) {
-    val uiState by component.uiState.collectAsState()
+    val uiState by component.state.subscribeAsState()
 
     // Save on dispose (when navigating back)
     DisposableEffect(Unit) { onDispose { component.saveOnDispose() } }

@@ -18,8 +18,9 @@ This project uses a modern **Kotlin Multiplatform** stack to share code between 
 | **Language** | [Kotlin](https://kotlinlang.org/) | Modern, concise, and safe programming language. |
 | **UI Framework** | [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) | Declarative UI framework shared across platforms. |
 | **Navigation** | [Decompose](https://arkivanov.github.io/Decompose/) | Lifecycle-aware navigation library for Compose Multiplatform. |
-| **DI** | [Koin](https://insert-koin.io/) | Lightweight dependency injection framework. |
-| **Database** | [Room KMP](https://developer.android.com/kotlin/multiplatform/room) | SQLite object mapping library. |
+| **DI** | [kotlin-inject](https://github.com/evant/kotlin-inject) | Compile-time dependency injection framework. |
+| **Database** | [Room KMP](https://developer.android.com/kotlin/multiplatform/room) | SQLite object mapping library for Kotlin Multiplatform. |
+| **Error Handling** | [Arrow](https://arrow-kt.io/) | Typed functional programming for Kotlin. |
 | **Concurrency** | [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) | Library for asynchronous programming. |
 | **Date & Time** | [Kotlinx DateTime](https://github.com/Kotlin/kotlinx-datetime) | Multiplatform date and time handling. |
 
@@ -40,7 +41,6 @@ The codebase is organized into shared and platform-specific modules:
     *   `commonMain`: Code common to all targets.
     *   `androidMain`: Android-specific implementation.
     *   `iosMain`: iOS-specific implementation (e.g., Apple frameworks integration).
-    *   `jvmMain`: Desktop (JVM) specific implementation.
 
 *   **`/iosApp`**: The iOS application entry point. Contains the native shell and SwiftUI code required to bootstrap the shared UI.
 
@@ -66,7 +66,7 @@ To build and run the development version of the iOS app:
 
 1.  Open the `/iosApp` directory in **Xcode**.
 2.  Run the application from Xcode.
-3.  Alternatively, use the run configuration from your IDE’s toolbar.
+3.  Alternatively, use the run configuration from your IDE's toolbar.
 
 ---
 

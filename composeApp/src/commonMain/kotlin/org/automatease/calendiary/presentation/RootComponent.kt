@@ -10,10 +10,9 @@ import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
-import org.automatease.calendiary.domain.repository.DiaryRepository
+import org.automatease.calendiary.di.CalendarComponentFactory
+import org.automatease.calendiary.di.NoteEditorComponentFactory
 import org.automatease.calendiary.presentation.calendar.CalendarComponent
-import org.automatease.calendiary.presentation.calendar.DefaultCalendarComponent
-import org.automatease.calendiary.presentation.editor.DefaultNoteEditorComponent
 import org.automatease.calendiary.presentation.editor.NoteEditorComponent
 
 /** Root component interface that manages the navigation stack. */
@@ -28,10 +27,14 @@ interface RootComponent {
     }
 }
 
-/** Default implementation of RootComponent using Decompose's child stack navigation. */
+/**
+ * Default implementation of RootComponent using Decompose's child stack navigation. Uses factory
+ * functions for child component creation to support the assisted injection pattern.
+ */
 class DefaultRootComponent(
     componentContext: ComponentContext,
-    private val diaryRepository: DiaryRepository,
+    private val calendarFactory: CalendarComponentFactory,
+    private val noteEditorFactory: NoteEditorComponentFactory,
 ) : RootComponent, ComponentContext by componentContext {
 
     private val navigation = StackNavigation<Config>()
@@ -58,22 +61,20 @@ class DefaultRootComponent(
 
     @OptIn(DelicateDecomposeApi::class)
     private fun calendarComponent(componentContext: ComponentContext): CalendarComponent {
-        return DefaultCalendarComponent(
-            componentContext = componentContext,
-            diaryRepository = diaryRepository,
-            onNavigateToEditor = { date -> navigation.push(Config.NoteEditor(date)) },
+        return calendarFactory(
+            componentContext,
+            { date -> navigation.push(Config.NoteEditor(date)) },
         )
     }
 
     private fun noteEditorComponent(
         componentContext: ComponentContext,
-        date: LocalDate
+        date: LocalDate,
     ): NoteEditorComponent {
-        return DefaultNoteEditorComponent(
-            componentContext = componentContext,
-            date = date,
-            diaryRepository = diaryRepository,
-            onNavigateBack = { navigation.pop() },
+        return noteEditorFactory(
+            componentContext,
+            date,
+            { navigation.pop() },
         )
     }
 
@@ -85,3 +86,6 @@ class DefaultRootComponent(
         @Serializable data class NoteEditor(val date: LocalDate) : Config
     }
 }
+
+/** Factory type alias for creating RootComponent instances with assisted injection. */
+typealias RootComponentFactory = (ComponentContext) -> RootComponent

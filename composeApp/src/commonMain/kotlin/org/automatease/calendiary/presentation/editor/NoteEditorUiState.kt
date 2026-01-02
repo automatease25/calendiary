@@ -10,6 +10,7 @@ data class NoteEditorUiState(
     val isSaving: Boolean = false,
     val dateDisplayText: String = "",
     val hasUnsavedChanges: Boolean = false,
+    val errorMessage: String? = null,
 )
 
 /** Events that can be triggered from the note editor UI. */

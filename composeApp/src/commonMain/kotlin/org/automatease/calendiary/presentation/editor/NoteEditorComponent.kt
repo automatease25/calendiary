@@ -1,23 +1,22 @@
 package org.automatease.calendiary.presentation.editor
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.value.MutableValue
+import com.arkivanov.decompose.value.Value
+import com.arkivanov.decompose.value.update
 import com.arkivanov.essenty.lifecycle.coroutines.coroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
+import org.automatease.calendiary.domain.error.DiaryError
 import org.automatease.calendiary.domain.model.DiaryEntry
 import org.automatease.calendiary.domain.repository.DiaryRepository
 
-/** Interface for the note editor component. */
+/** Interface for the note editor component. Uses Decompose Value for state. */
 interface NoteEditorComponent {
-    val uiState: StateFlow<NoteEditorUiState>
+    val state: Value<NoteEditorUiState>
 
     fun onEvent(event: NoteEditorUiEvent)
 
@@ -26,18 +25,21 @@ interface NoteEditorComponent {
     fun saveOnDispose()
 }
 
-/** Default implementation of NoteEditorComponent using Decompose. */
+/**
+ * Default implementation of NoteEditorComponent using Decompose. Uses Arrow Either for typed error
+ * handling. Factories are manually created in AppComponent for assisted injection pattern.
+ */
 class DefaultNoteEditorComponent(
     componentContext: ComponentContext,
     private val date: LocalDate,
-    private val diaryRepository: DiaryRepository,
     private val onNavigateBack: () -> Unit,
+    private val diaryRepository: DiaryRepository,
 ) : NoteEditorComponent, ComponentContext by componentContext {
 
     private val scope = coroutineScope()
 
-    private val _uiState = MutableStateFlow(createInitialState())
-    override val uiState: StateFlow<NoteEditorUiState> = _uiState.asStateFlow()
+    private val _state = MutableValue(createInitialState())
+    override val state: Value<NoteEditorUiState> = _state
 
     private var autoSaveJob: Job? = null
     private var originalContent: String = ""
@@ -107,24 +109,48 @@ class DefaultNoteEditorComponent(
         onNavigateBack()
     }
 
-    /** Loads the existing diary entry for the date. */
+    /** Loads the existing diary entry for the date using typed error handling. */
     private fun loadEntry() {
         scope.launch {
-            val entry = diaryRepository.getEntry(date).first()
-            originalContent = entry?.content ?: ""
+            val result = diaryRepository.getEntry(date)
 
-            _uiState.update { currentState ->
-                currentState.copy(
-                    content = originalContent, isLoading = false, hasUnsavedChanges = false)
-            }
+            result.fold(
+                ifLeft = { error ->
+                    when (error) {
+                        is DiaryError.NotFound -> {
+                            // Entry doesn't exist yet - that's fine, start with empty content
+                            originalContent = ""
+                            _state.update { it.copy(content = "", isLoading = false) }
+                        }
+                        else -> {
+                            // Handle other errors by showing error state
+                            _state.update {
+                                it.copy(
+                                    isLoading = false,
+                                    errorMessage = error.message,
+                                )
+                            }
+                        }
+                    }
+                },
+                ifRight = { entry ->
+                    originalContent = entry.content
+                    _state.update {
+                        it.copy(
+                            content = entry.content,
+                            isLoading = false,
+                            hasUnsavedChanges = false,
+                        )
+                    }
+                },
+            )
         }
     }
 
     /** Updates the content and triggers auto-save with debounce. */
     private fun updateContent(newContent: String) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                content = newContent, hasUnsavedChanges = newContent != originalContent)
+        _state.update {
+            it.copy(content = newContent, hasUnsavedChanges = newContent != originalContent)
         }
 
         // Cancel previous auto-save job and start a new one
@@ -132,15 +158,15 @@ class DefaultNoteEditorComponent(
         autoSaveJob =
             scope.launch {
                 delay(AUTO_SAVE_DELAY_MS)
-                if (_uiState.value.hasUnsavedChanges) {
+                if (_state.value.hasUnsavedChanges) {
                     saveEntry()
                 }
             }
     }
 
-    /** Saves the current entry to the repository. */
+    /** Saves the current entry to the repository using typed error handling. */
     private fun saveEntry() {
-        val content = _uiState.value.content
+        val content = _state.value.content
 
         // Don't save empty content - delete instead if it was previously saved
         if (content.isBlank()) {
@@ -151,39 +177,72 @@ class DefaultNoteEditorComponent(
         }
 
         scope.launch {
-            _uiState.update { it.copy(isSaving = true) }
+            _state.update { it.copy(isSaving = true) }
 
             val entry = DiaryEntry(date = date, content = content)
-            diaryRepository.saveEntry(entry)
-            originalContent = content
+            val result = diaryRepository.saveEntry(entry)
 
-            _uiState.update { currentState ->
-                currentState.copy(isSaving = false, hasUnsavedChanges = false)
-            }
+            result.fold(
+                ifLeft = { error ->
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = error.message,
+                        )
+                    }
+                },
+                ifRight = {
+                    originalContent = content
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            hasUnsavedChanges = false,
+                            errorMessage = null,
+                        )
+                    }
+                },
+            )
         }
     }
 
     /** Deletes the diary entry for this date. */
     private fun deleteEntry() {
         scope.launch {
-            _uiState.update { it.copy(isSaving = true) }
+            _state.update { it.copy(isSaving = true) }
 
-            diaryRepository.deleteEntry(date)
-            originalContent = ""
+            val result = diaryRepository.deleteEntry(date)
 
-            _uiState.update { currentState ->
-                currentState.copy(content = "", isSaving = false, hasUnsavedChanges = false)
-            }
+            result.fold(
+                ifLeft = { error ->
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = error.message,
+                        )
+                    }
+                },
+                ifRight = {
+                    originalContent = ""
+                    _state.update {
+                        it.copy(
+                            content = "",
+                            isSaving = false,
+                            hasUnsavedChanges = false,
+                            errorMessage = null,
+                        )
+                    }
+                },
+            )
         }
     }
 
     /** Saves any pending changes before the screen is disposed. Should be called from onDispose. */
     override fun saveOnDispose() {
         autoSaveJob?.cancel()
-        if (_uiState.value.hasUnsavedChanges) {
+        if (_state.value.hasUnsavedChanges) {
             // Use a non-cancellable scope for final save
             scope.launch {
-                val content = _uiState.value.content
+                val content = _state.value.content
                 if (content.isNotBlank()) {
                     val entry = DiaryEntry(date = date, content = content)
                     diaryRepository.saveEntry(entry)
