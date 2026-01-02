@@ -39,58 +39,46 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.koin.koinScreenModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import kotlinx.datetime.LocalDate
 import org.automatease.calendiary.domain.model.CalendarDay
-import org.automatease.calendiary.presentation.editor.NoteEditorScreen
 
 /** Main calendar screen displaying the monthly grid. */
-class CalendarScreen : Screen {
+@Composable
+fun CalendarScreen(component: CalendarComponent) {
+    val uiState by component.uiState.collectAsState()
 
-    @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-        val screenModel = koinScreenModel<CalendarScreenModel>()
-        val uiState by screenModel.uiState.collectAsState()
+    // Refresh when returning to this screen
+    LaunchedEffect(Unit) { component.refresh() }
 
-        // Refresh when returning to this screen
-        LaunchedEffect(Unit) { screenModel.refresh() }
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
+            // Month navigation header
+            MonthHeader(
+                monthDisplayName = uiState.monthDisplayName,
+                year = uiState.currentYear,
+                onPreviousMonth = { component.onEvent(CalendarUiEvent.NavigateToPreviousMonth) },
+                onNextMonth = { component.onEvent(CalendarUiEvent.NavigateToNextMonth) },
+                onTodayClick = { component.onEvent(CalendarUiEvent.NavigateToToday) },
+            )
 
-        Scaffold(containerColor = MaterialTheme.colorScheme.background) { paddingValues ->
-            Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-                // Month navigation header
-                MonthHeader(
-                    monthDisplayName = uiState.monthDisplayName,
-                    year = uiState.currentYear,
-                    onPreviousMonth = {
-                        screenModel.onEvent(CalendarUiEvent.NavigateToPreviousMonth)
-                    },
-                    onNextMonth = { screenModel.onEvent(CalendarUiEvent.NavigateToNextMonth) },
-                    onTodayClick = { screenModel.onEvent(CalendarUiEvent.NavigateToToday) },
-                )
+            Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+            // Day headers (Mon, Tue, Wed, ...)
+            DayHeadersRow(dayHeaders = uiState.dayHeaders)
 
-                // Day headers (Mon, Tue, Wed, ...)
-                DayHeadersRow(dayHeaders = uiState.dayHeaders)
+            Spacer(modifier = Modifier.height(8.dp))
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Calendar grid
-                if (uiState.isLoading) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    uiState.calendarMonth?.let { calendarMonth ->
-                        CalendarGrid(
-                            days = calendarMonth.days,
-                            onDayClick = { date -> navigator.push(NoteEditorScreen(date)) },
-                        )
-                    }
+            // Calendar grid
+            if (uiState.isLoading) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                uiState.calendarMonth?.let { calendarMonth ->
+                    CalendarGrid(
+                        days = calendarMonth.days,
+                        onDayClick = { date -> component.onDayClick(date) },
+                    )
                 }
             }
         }

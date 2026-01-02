@@ -1,24 +1,42 @@
 package org.automatease.calendiary.presentation.calendar
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.Month
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 import org.automatease.calendiary.domain.logic.CalendarLogic
 import org.automatease.calendiary.domain.repository.DiaryRepository
 
-/** ScreenModel for the calendar screen. Manages calendar state and handles user interactions. */
-class CalendarScreenModel(private val diaryRepository: DiaryRepository) : ScreenModel {
+/** Interface for the calendar component. */
+interface CalendarComponent {
+    val uiState: StateFlow<CalendarUiState>
+
+    fun onEvent(event: CalendarUiEvent)
+
+    fun refresh()
+
+    fun onDayClick(date: LocalDate)
+}
+
+/** Default implementation of CalendarComponent using Decompose. */
+class DefaultCalendarComponent(
+    componentContext: ComponentContext,
+    private val diaryRepository: DiaryRepository,
+    private val onNavigateToEditor: (LocalDate) -> Unit,
+) : CalendarComponent, ComponentContext by componentContext {
+
+    private val scope = coroutineScope()
 
     private val _uiState = MutableStateFlow(createInitialState())
-    val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
+    override val uiState: StateFlow<CalendarUiState> = _uiState.asStateFlow()
 
     init {
         loadCalendarData()
@@ -36,15 +54,19 @@ class CalendarScreenModel(private val diaryRepository: DiaryRepository) : Screen
     }
 
     /** Handles UI events from the calendar screen. */
-    fun onEvent(event: CalendarUiEvent) {
+    override fun onEvent(event: CalendarUiEvent) {
         when (event) {
             is CalendarUiEvent.NavigateToPreviousMonth -> navigateToPreviousMonth()
             is CalendarUiEvent.NavigateToNextMonth -> navigateToNextMonth()
             is CalendarUiEvent.NavigateToToday -> navigateToToday()
             is CalendarUiEvent.SelectDate -> {
-                /* Navigation handled by screen */
+                /* Navigation handled by onDayClick */
             }
         }
+    }
+
+    override fun onDayClick(date: LocalDate) {
+        onNavigateToEditor(date)
     }
 
     /** Navigates to the previous month. */
@@ -82,7 +104,7 @@ class CalendarScreenModel(private val diaryRepository: DiaryRepository) : Screen
 
     /** Loads calendar data for the current month. Combines the calendar grid with diary entries. */
     private fun loadCalendarData() {
-        screenModelScope.launch {
+        scope.launch {
             val year = _uiState.value.currentYear
             val month = _uiState.value.currentMonth
 
@@ -106,7 +128,7 @@ class CalendarScreenModel(private val diaryRepository: DiaryRepository) : Screen
     }
 
     /** Refreshes calendar data (useful after returning from editor). */
-    fun refresh() {
+    override fun refresh() {
         loadCalendarData()
     }
 }

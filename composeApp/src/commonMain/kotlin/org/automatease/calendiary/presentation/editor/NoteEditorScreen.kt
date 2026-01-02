@@ -1,6 +1,5 @@
 package org.automatease.calendiary.presentation.editor
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -28,101 +27,82 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
-import kotlinx.datetime.LocalDate
-import org.automatease.calendiary.domain.repository.DiaryRepository
-import org.koin.compose.koinInject
 
-/**
- * Note editor screen for viewing and editing diary entries. Accepts a LocalDate to identify which
- * day's entry to edit.
- */
-data class NoteEditorScreen(val date: LocalDate) : Screen {
+/** Note editor screen for viewing and editing diary entries. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NoteEditorScreen(component: NoteEditorComponent) {
+    val uiState by component.uiState.collectAsState()
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    override fun Content() {
-        val navigator = LocalNavigator.currentOrThrow
-        val diaryRepository = koinInject<DiaryRepository>()
+    // Save on dispose (when navigating back)
+    DisposableEffect(Unit) { onDispose { component.saveOnDispose() } }
 
-        // Create screen model with the date parameter
-        val screenModel = remember(date) { NoteEditorScreenModel(date, diaryRepository) }
-        val uiState by screenModel.uiState.collectAsState()
-
-        // Save on dispose (when navigating back)
-        DisposableEffect(Unit) { onDispose { screenModel.saveOnDispose() } }
-
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Column {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            text = uiState.dateDisplayText,
+                            style = MaterialTheme.typography.titleMedium)
+                        if (uiState.isSaving) {
                             Text(
-                                text = uiState.dateDisplayText,
-                                style = MaterialTheme.typography.titleMedium)
-                            if (uiState.isSaving) {
-                                Text(
-                                    text = "Saving...",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                                )
-                            } else if (uiState.hasUnsavedChanges) {
-                                Text(
-                                    text = "Unsaved changes",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
+                                text = "Saving...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            )
+                        } else if (uiState.hasUnsavedChanges) {
+                            Text(
+                                text = "Unsaved changes",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
                         }
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { component.onBackClick() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (uiState.content.isNotBlank()) {
+                        IconButton(onClick = { component.onEvent(NoteEditorUiEvent.Delete) }) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back")
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete entry",
+                                tint = MaterialTheme.colorScheme.error,
+                            )
                         }
-                    },
-                    actions = {
-                        if (uiState.content.isNotBlank()) {
-                            IconButton(
-                                onClick = { screenModel.onEvent(NoteEditorUiEvent.Delete) }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Delete entry",
-                                        tint = MaterialTheme.colorScheme.error,
-                                    )
-                                }
-                        }
-                    },
-                    colors =
-                        TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.surface),
-                )
-            },
-            containerColor = MaterialTheme.colorScheme.background,
-        ) { paddingValues ->
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                NoteEditorContent(
-                    content = uiState.content,
-                    onContentChange = { screenModel.onEvent(NoteEditorUiEvent.UpdateContent(it)) },
-                    modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding(),
-                )
+                    }
+                },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface),
+            )
+        },
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { paddingValues ->
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
             }
+        } else {
+            NoteEditorContent(
+                content = uiState.content,
+                onContentChange = { component.onEvent(NoteEditorUiEvent.UpdateContent(it)) },
+                modifier = Modifier.fillMaxSize().padding(paddingValues).imePadding(),
+            )
         }
     }
 }

@@ -7,7 +7,6 @@ import org.automatease.calendiary.data.local.DiaryDatabase
 import org.automatease.calendiary.data.local.getDatabaseBuilder
 import org.automatease.calendiary.data.repository.SqlDiaryRepository
 import org.automatease.calendiary.domain.repository.DiaryRepository
-import org.automatease.calendiary.presentation.calendar.CalendarScreenModel
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -29,9 +28,6 @@ val appModule: Module = module {
 
     // Repository
     single<DiaryRepository> { SqlDiaryRepository(get()) }
-
-    // ScreenModels
-    factory { CalendarScreenModel(get()) }
 }
 
 /** Returns all Koin modules for the application. */

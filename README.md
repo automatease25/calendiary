@@ -17,7 +17,7 @@ This project uses a modern **Kotlin Multiplatform** stack to share code between 
 |----------|------------|-------------|
 | **Language** | [Kotlin](https://kotlinlang.org/) | Modern, concise, and safe programming language. |
 | **UI Framework** | [Compose Multiplatform](https://www.jetbrains.com/lp/compose-multiplatform/) | Declarative UI framework shared across platforms. |
-| **Navigation** | [Voyager](https://github.com/adrielcafe/voyager) | A navigation library built specifically for Compose. |
+| **Navigation** | [Decompose](https://arkivanov.github.io/Decompose/) | Lifecycle-aware navigation library for Compose Multiplatform. |
 | **DI** | [Koin](https://insert-koin.io/) | Lightweight dependency injection framework. |
 | **Database** | [Room KMP](https://developer.android.com/kotlin/multiplatform/room) | SQLite object mapping library. |
 | **Concurrency** | [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) | Library for asynchronous programming. |

@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -53,17 +54,20 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
             
-            // Voyager
-            implementation(libs.voyager.navigator)
-            implementation(libs.voyager.screenmodel)
-            implementation(libs.voyager.koin)
-            implementation(libs.voyager.transitions)
+            // Decompose
+            implementation(libs.decompose.core)
+            implementation(libs.decompose.compose)
+            implementation(libs.essenty.lifecycle)
+            implementation(libs.essenty.lifecycle.coroutines)
             
             // KotlinX DateTime
             implementation(libs.kotlinx.datetime)
             
             // Coroutines
             implementation(libs.kotlinx.coroutines.core)
+            
+            // Serialization (for Decompose)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

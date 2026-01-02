@@ -1,7 +1,7 @@
 package org.automatease.calendiary.presentation.editor
 
-import cafe.adriel.voyager.core.model.ScreenModel
-import cafe.adriel.voyager.core.model.screenModelScope
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.coroutines.coroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,16 +15,29 @@ import kotlinx.datetime.LocalDate
 import org.automatease.calendiary.domain.model.DiaryEntry
 import org.automatease.calendiary.domain.repository.DiaryRepository
 
-/**
- * ScreenModel for the note editor screen. Handles loading, editing, and auto-saving diary entries.
- */
-class NoteEditorScreenModel(
+/** Interface for the note editor component. */
+interface NoteEditorComponent {
+    val uiState: StateFlow<NoteEditorUiState>
+
+    fun onEvent(event: NoteEditorUiEvent)
+
+    fun onBackClick()
+
+    fun saveOnDispose()
+}
+
+/** Default implementation of NoteEditorComponent using Decompose. */
+class DefaultNoteEditorComponent(
+    componentContext: ComponentContext,
     private val date: LocalDate,
     private val diaryRepository: DiaryRepository,
-) : ScreenModel {
+    private val onNavigateBack: () -> Unit,
+) : NoteEditorComponent, ComponentContext by componentContext {
+
+    private val scope = coroutineScope()
 
     private val _uiState = MutableStateFlow(createInitialState())
-    val uiState: StateFlow<NoteEditorUiState> = _uiState.asStateFlow()
+    override val uiState: StateFlow<NoteEditorUiState> = _uiState.asStateFlow()
 
     private var autoSaveJob: Job? = null
     private var originalContent: String = ""
@@ -82,7 +95,7 @@ class NoteEditorScreenModel(
     }
 
     /** Handles UI events from the note editor screen. */
-    fun onEvent(event: NoteEditorUiEvent) {
+    override fun onEvent(event: NoteEditorUiEvent) {
         when (event) {
             is NoteEditorUiEvent.UpdateContent -> updateContent(event.content)
             is NoteEditorUiEvent.Save -> saveEntry()
@@ -90,9 +103,13 @@ class NoteEditorScreenModel(
         }
     }
 
+    override fun onBackClick() {
+        onNavigateBack()
+    }
+
     /** Loads the existing diary entry for the date. */
     private fun loadEntry() {
-        screenModelScope.launch {
+        scope.launch {
             val entry = diaryRepository.getEntry(date).first()
             originalContent = entry?.content ?: ""
 
@@ -113,7 +130,7 @@ class NoteEditorScreenModel(
         // Cancel previous auto-save job and start a new one
         autoSaveJob?.cancel()
         autoSaveJob =
-            screenModelScope.launch {
+            scope.launch {
                 delay(AUTO_SAVE_DELAY_MS)
                 if (_uiState.value.hasUnsavedChanges) {
                     saveEntry()
@@ -133,7 +150,7 @@ class NoteEditorScreenModel(
             return
         }
 
-        screenModelScope.launch {
+        scope.launch {
             _uiState.update { it.copy(isSaving = true) }
 
             val entry = DiaryEntry(date = date, content = content)
@@ -148,7 +165,7 @@ class NoteEditorScreenModel(
 
     /** Deletes the diary entry for this date. */
     private fun deleteEntry() {
-        screenModelScope.launch {
+        scope.launch {
             _uiState.update { it.copy(isSaving = true) }
 
             diaryRepository.deleteEntry(date)
@@ -161,11 +178,11 @@ class NoteEditorScreenModel(
     }
 
     /** Saves any pending changes before the screen is disposed. Should be called from onDispose. */
-    fun saveOnDispose() {
+    override fun saveOnDispose() {
         autoSaveJob?.cancel()
         if (_uiState.value.hasUnsavedChanges) {
             // Use a non-cancellable scope for final save
-            screenModelScope.launch {
+            scope.launch {
                 val content = _uiState.value.content
                 if (content.isNotBlank()) {
                     val entry = DiaryEntry(date = date, content = content)
