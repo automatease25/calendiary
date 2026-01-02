@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -29,6 +30,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
         }
+        
         commonMain.dependencies {
             implementation(compose.runtime)
             implementation(compose.foundation)
@@ -65,6 +67,7 @@ kotlin {
             // Serialization (for Decompose)
             implementation(libs.kotlinx.serialization.json)
         }
+        
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
@@ -82,16 +85,32 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+    
+    signingConfigs {
+        create("release") {
+            val keystoreProperties = Properties()
+            file("keystore.properties").inputStream().use { keystoreProperties.load(it) }
+            storeFile = file(keystoreProperties.getProperty("storeFile"))
+            storePassword = keystoreProperties.getProperty("storePassword")
+            keyPassword = keystoreProperties.getProperty("keyPassword")
+            keyAlias = keystoreProperties.getProperty("keyAlias")
+        }
+    }
+    
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
         }
     }
+    
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
