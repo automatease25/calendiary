@@ -4,6 +4,9 @@ build/
 **/build/
 !src/**/build/
 
+# Git worktrees
+.worktrees/
+
 # Gradle Wrapper
 !gradle/wrapper/gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.properties
